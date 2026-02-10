@@ -10,7 +10,7 @@ let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
 const meteorites: THREE.Mesh[] = []
 let aurora: THREE.Mesh
-let newYearText: THREE.Mesh
+let newYearText: THREE.Mesh | THREE.Group
 let particles: THREE.Points
 let animationState = 'meteorite' // meteorite, aurora, transition, newyear
 let animationTime = 0
