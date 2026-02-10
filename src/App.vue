@@ -63,14 +63,40 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
+  
+  // 检测窗口是否达到最大尺寸
+  checkWindowSize()
+}
+
+// 检测窗口大小，当达到最大时显示新年快乐文字
+function checkWindowSize() {
+  // 获取屏幕最大尺寸
+  const screenWidth = window.screen.availWidth
+  const screenHeight = window.screen.availHeight
+  
+  // 当窗口尺寸接近屏幕最大尺寸时显示文字
+  if (window.innerWidth >= screenWidth * 0.95 && window.innerHeight >= screenHeight * 0.95) {
+    if (newYearText && !newYearText.visible) {
+      newYearText.visible = true
+      particles.visible = true
+      animationState = 'newyear'
+    }
+  }
 }
 
 // 创建流星雨
 function createMeteorites() {
-  const meteoriteGeometry = new THREE.CylinderGeometry(0.01, 0.1, 1, 8)
-  const meteoriteMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff })
-
+  // 使用锥体几何体创建光束效果
+  const meteoriteGeometry = new THREE.ConeGeometry(0.01, 1, 8)
+  
   for (let i = 0; i < 50; i++) {
+    // 使用MeshLambertMaterial实现更好的光照效果
+    const meteoriteMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0xffffff,
+      transparent: true,
+      opacity: 1
+    })
+    
     const meteorite = new THREE.Mesh(meteoriteGeometry, meteoriteMaterial)
     
     // 随机位置
@@ -78,12 +104,17 @@ function createMeteorites() {
     meteorite.position.y = (Math.random() - 0.5) * 20
     meteorite.position.z = (Math.random() - 0.5) * 10
     
-    // 随机旋转
-    meteorite.rotation.x = Math.random() * Math.PI
+    // 随机旋转，使流星朝向下方
+    meteorite.rotation.x = Math.PI // 锥体尖端朝下
     meteorite.rotation.y = Math.random() * Math.PI
     
     // 随机缩放
     meteorite.scale.setScalar(Math.random() * 0.5 + 0.5)
+    
+    // 添加速度和透明度属性
+    ;(meteorite as any).speed = Math.random() * 0.3 + 0.2
+    ;(meteorite as any).opacity = 1
+    ;(meteorite as any).fading = false
     
     scene.add(meteorite)
     meteorites.push(meteorite)
@@ -155,14 +186,32 @@ function createNewYearText() {
     const texture = new THREE.CanvasTexture(canvas)
     texture.needsUpdate = true
     
-    // 创建平面几何体
-    const geometry = new THREE.PlaneGeometry(3, 0.8)
-    const material = new THREE.MeshBasicMaterial({ 
+    // 使用ExtrudeGeometry创建3D效果
+    const shape = new THREE.Shape()
+    const textGeometry = new THREE.PlaneGeometry(3, 0.8)
+    
+    // 创建挤压配置
+    const extrudeSettings = {
+      depth: 0.2,
+      bevelEnabled: true,
+      bevelThickness: 0.03,
+      bevelSize: 0.02,
+      bevelSegments: 5
+    }
+    
+    // 创建3D几何体
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+    const planeGeometry = new THREE.PlaneGeometry(3, 0.8)
+    
+    // 创建材质
+    const textMaterial = new THREE.MeshPhongMaterial({ 
       map: texture,
-      transparent: true
+      shininess: 100,
+      specular: 0xffffff
     })
     
-    newYearText = new THREE.Mesh(geometry, material)
+    // 使用平面几何体作为基础，因为ExtrudeGeometry需要Shape
+    newYearText = new THREE.Mesh(planeGeometry, textMaterial)
     newYearText.position.z = -5
     scene.add(newYearText)
     newYearText.visible = false
@@ -229,6 +278,9 @@ function animate() {
   // 无论处于哪个状态，都更新流星，这样流星效果会一直存在
   updateMeteorites()
 
+  // 检测窗口大小，当达到最大时显示新年快乐文字
+  checkWindowSize()
+
   switch (animationState) {
     case 'meteorite':
       // 3秒后切换到极光效果
@@ -286,19 +338,62 @@ function animate() {
 // 更新流星雨
 function updateMeteorites() {
   meteorites.forEach((meteorite) => {
+    const m = meteorite as any
+    
     // 流星下落
-    meteorite.position.y -= 0.1 + Math.random() * 0.2
+    meteorite.position.y -= m.speed
     
     // 流星旋转
-    meteorite.rotation.x += 0.01
+    meteorite.rotation.y += 0.01
+    
+    // 实现闪烁效果
+    if (!m.fading) {
+      // 随机开始淡出
+      if (Math.random() < 0.02) {
+        m.fading = true
+      }
+    } else {
+      // 淡出效果
+      m.opacity -= 0.05
+      if (meteorite.material instanceof THREE.Material) {
+        meteorite.material.opacity = m.opacity
+      }
+      
+      // 完全淡出后重置
+      if (m.opacity <= 0) {
+        resetMeteorite(meteorite)
+      }
+    }
     
     // 流星超出边界后重置
     if (meteorite.position.y < -10) {
-      meteorite.position.y = 10
-      meteorite.position.x = (Math.random() - 0.5) * 20
-      meteorite.position.z = (Math.random() - 0.5) * 10
+      resetMeteorite(meteorite)
     }
   })
+}
+
+// 重置流星
+function resetMeteorite(meteorite: THREE.Mesh) {
+  const m = meteorite as any
+  
+  // 重置位置
+  meteorite.position.x = (Math.random() - 0.5) * 20
+  meteorite.position.y = 10
+  meteorite.position.z = (Math.random() - 0.5) * 10
+  
+  // 重置旋转
+  meteorite.rotation.x = Math.PI
+  meteorite.rotation.y = Math.random() * Math.PI
+  
+  // 重置透明度和状态
+  m.opacity = 1
+  m.fading = false
+  if (meteorite.material instanceof THREE.Material) {
+    meteorite.material.opacity = 1
+  }
+  
+  // 重置速度
+  m.speed = Math.random() * 0.3 + 0.2
 }
 
 // 挂载时初始化
