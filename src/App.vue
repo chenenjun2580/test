@@ -2,8 +2,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 
 const containerRef = ref<HTMLElement | null>(null)
 let scene: THREE.Scene
@@ -134,47 +132,53 @@ function createAurora() {
 
 // 创建3D新年快乐文字
 function createNewYearText() {
-  const loader = new FontLoader()
-  loader.load(
-    'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
-    (font: any) => {
-      const textGeometry = new TextGeometry('新年快乐 2026', {
-        font: font,
-        size: 1,
-        depth: 0.2,
-        curveSegments: 12,
-        bevelEnabled: true,
-        bevelThickness: 0.03,
-        bevelSize: 0.02,
-        bevelOffset: 0,
-        bevelSegments: 5
-      })
-      textGeometry.center()
+  // 使用CanvasTexture创建包含中文字符的纹理
+  const canvas = document.createElement('canvas')
+  canvas.width = 1024
+  canvas.height = 256
+  const context = canvas.getContext('2d')
+  
+  if (context) {
+    // 设置字体和样式
+    context.fillStyle = '#000000'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.fillStyle = '#ff0000'
+    context.font = 'bold 80px "Microsoft YaHei", "SimHei", sans-serif'
+    context.textAlign = 'center'
+    context.textBaseline = 'middle'
+    
+    // 绘制中文文本
+    const text = '新年快乐 2026'
+    context.fillText(text, canvas.width / 2, canvas.height / 2)
+    
+    // 创建纹理
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.needsUpdate = true
+    
+    // 创建平面几何体
+    const geometry = new THREE.PlaneGeometry(3, 0.8)
+    const material = new THREE.MeshBasicMaterial({ 
+      map: texture,
+      transparent: true
+    })
+    
+    newYearText = new THREE.Mesh(geometry, material)
+    newYearText.position.z = -5
+    scene.add(newYearText)
+    newYearText.visible = false
+  }
 
-      const textMaterial = new THREE.MeshPhongMaterial({
-        color: 0xff0000,
-        shininess: 100,
-        specular: 0xffffff
-      })
+  // 添加灯光
+  const ambientLight = new THREE.AmbientLight(0x404040)
+  scene.add(ambientLight)
 
-      newYearText = new THREE.Mesh(textGeometry, textMaterial)
-      newYearText.position.z = -5
-      scene.add(newYearText)
-      newYearText.visible = false
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+  directionalLight.position.set(1, 1, 1)
+  scene.add(directionalLight)
 
-      // 添加灯光
-      const ambientLight = new THREE.AmbientLight(0x404040)
-      scene.add(ambientLight)
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-      directionalLight.position.set(1, 1, 1)
-      scene.add(directionalLight)
-
-      const pointLight = new THREE.PointLight(0xff0000, 1, 100)
-      pointLight.position.set(0, 0, 5)
-      scene.add(pointLight)
-    }
-  )
+  const pointLight = new THREE.PointLight(0xff0000, 1, 100)
+  pointLight.position.set(0, 0, 5)
+  scene.add(pointLight)
 }
 
 // 创建粒子效果
@@ -222,11 +226,11 @@ function animate() {
   // 更新轨道控制器
   controls.update()
 
+  // 无论处于哪个状态，都更新流星，这样流星效果会一直存在
+  updateMeteorites()
+
   switch (animationState) {
     case 'meteorite':
-      // 更新流星雨
-      updateMeteorites()
-      
       // 3秒后切换到极光效果
       if (animationTime > 3) {
         animationState = 'aurora'
