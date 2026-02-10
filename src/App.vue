@@ -2,6 +2,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 
 const containerRef = ref<HTMLElement | null>(null)
 let scene: THREE.Scene
@@ -132,14 +134,14 @@ function createAurora() {
 
 // 创建3D新年快乐文字
 function createNewYearText() {
-  const loader = new THREE.FontLoader()
+  const loader = new FontLoader()
   loader.load(
     'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
-    (font) => {
-      const textGeometry = new THREE.TextGeometry('新年快乐 2026', {
+    (font: any) => {
+      const textGeometry = new TextGeometry('新年快乐 2026', {
         font: font,
         size: 1,
-        height: 0.2,
+        depth: 0.2,
         curveSegments: 12,
         bevelEnabled: true,
         bevelThickness: 0.03,
@@ -235,7 +237,7 @@ function animate() {
 
     case 'aurora':
       // 更新极光
-      if (aurora.material instanceof THREE.ShaderMaterial) {
+      if (aurora.material instanceof THREE.ShaderMaterial && aurora.material.uniforms.time) {
         aurora.material.uniforms.time.value = animationTime
       }
       
