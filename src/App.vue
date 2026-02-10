@@ -175,8 +175,9 @@ function createNewYearText() {
   
   if (context) {
     // 设置字体和样式
-    // 注意：背景设置为透明，这样就不会有黑色边框
-    context.clearRect(0, 0, canvas.width, canvas.height)
+    // 先填充黑色背景，确保文字可见
+    context.fillStyle = '#000000'
+    context.fillRect(0, 0, canvas.width, canvas.height)
     context.fillStyle = '#ff0000'
     context.font = 'bold 80px "Microsoft YaHei", "SimHei", sans-serif'
     context.textAlign = 'center'
@@ -190,44 +191,54 @@ function createNewYearText() {
     const texture = new THREE.CanvasTexture(canvas)
     texture.needsUpdate = true
     
-    // 创建材质，使用透明背景
+    // 创建材质
     const textMaterial = new THREE.MeshPhongMaterial({ 
       map: texture,
-      transparent: true,
-      opacity: 1,
       shininess: 100,
       specular: 0xffffff
     })
     
-    // 创建一个平面几何体作为文字基础
+    // 创建一个平面几何体作为文字基础，使用合适的尺寸
     const planeGeometry = new THREE.PlaneGeometry(3, 0.8)
-    
-    // 创建挤压配置，创建3D效果
-    const extrudeSettings = {
-      depth: 0.1,
-      bevelEnabled: true,
-      bevelThickness: 0.02,
-      bevelSize: 0.01,
-      bevelSegments: 3
-    }
-    
-    // 创建一个简单的形状作为挤压基础
-    const shape = new THREE.Shape()
-    shape.moveTo(-1.5, -0.4)
-    shape.lineTo(1.5, -0.4)
-    shape.lineTo(1.5, 0.4)
-    shape.lineTo(-1.5, 0.4)
-    shape.closePath()
-    
-    // 创建挤压几何体
-    const extrudeGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
     
     // 创建3D文字组
     const textGroup = new THREE.Group()
     
-    // 创建挤压后的3D文字
-    const textMesh = new THREE.Mesh(extrudeGeometry, textMaterial)
-    textGroup.add(textMesh)
+    // 创建正面的平面，用于显示中文文本
+    const frontMesh = new THREE.Mesh(planeGeometry, textMaterial)
+    frontMesh.position.z = 0.1
+    textGroup.add(frontMesh)
+    
+    // 创建背面的平面
+    const backMesh = new THREE.Mesh(planeGeometry, textMaterial)
+    backMesh.position.z = -0.1
+    backMesh.rotation.y = Math.PI
+    textGroup.add(backMesh)
+    
+    // 创建3D效果的侧面
+    const sideGeometry = new THREE.BoxGeometry(3, 0.01, 0.2)
+    const sideMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 })
+    
+    // 顶面
+    const topMesh = new THREE.Mesh(sideGeometry, sideMaterial)
+    topMesh.position.y = 0.4
+    textGroup.add(topMesh)
+    
+    // 底面
+    const bottomMesh = new THREE.Mesh(sideGeometry, sideMaterial)
+    bottomMesh.position.y = -0.4
+    textGroup.add(bottomMesh)
+    
+    // 左侧面
+    const leftGeometry = new THREE.BoxGeometry(0.01, 0.8, 0.2)
+    const leftMesh = new THREE.Mesh(leftGeometry, sideMaterial)
+    leftMesh.position.x = -1.5
+    textGroup.add(leftMesh)
+    
+    // 右侧面
+    const rightMesh = new THREE.Mesh(leftGeometry, sideMaterial)
+    rightMesh.position.x = 1.5
+    textGroup.add(rightMesh)
     
     // 设置位置
     textGroup.position.set(0, 0, -5)
@@ -259,10 +270,10 @@ function createParticles() {
   const colors = new Float32Array(particleCount * 3)
 
   for (let i = 0; i < particleCount * 3; i += 3) {
-    // 随机位置
-    positions[i] = (Math.random() - 0.5) * 50
-    positions[i + 1] = (Math.random() - 0.5) * 50
-    positions[i + 2] = (Math.random() - 0.5) * 50
+    // 随机位置，限制在合理范围内
+    positions[i] = (Math.random() - 0.5) * 20
+    positions[i + 1] = (Math.random() - 0.5) * 20
+    positions[i + 2] = (Math.random() - 0.5) * 10
 
     // 随机颜色
     colors[i] = Math.random() * 0.5 + 0.5 // 红色
@@ -274,7 +285,7 @@ function createParticles() {
   particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
 
   const particleMaterial = new THREE.PointsMaterial({
-    size: 0.05,
+    size: 0.03,
     vertexColors: true,
     blending: THREE.AdditiveBlending,
     transparent: true,
