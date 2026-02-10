@@ -195,55 +195,40 @@ function createNewYearText() {
       specular: 0xffffff
     })
     
-    const sideMaterial = new THREE.MeshPhongMaterial({ 
-      color: 0xff0000,
-      shininess: 100,
-      specular: 0xffffff
-    })
+    // 创建一个平面几何体作为基础
+    const planeGeometry = new THREE.PlaneGeometry(3, 0.8)
+    
+    // 创建挤压配置，创建真正的3D效果
+    const extrudeSettings = {
+      depth: 0.2,
+      bevelEnabled: true,
+      bevelThickness: 0.03,
+      bevelSize: 0.02,
+      bevelSegments: 5
+    }
+    
+    // 创建一个简单的形状作为挤压基础
+    const shape = new THREE.Shape()
+    shape.moveTo(-1.5, -0.4)
+    shape.lineTo(1.5, -0.4)
+    shape.lineTo(1.5, 0.4)
+    shape.lineTo(-1.5, 0.4)
+    shape.closePath()
+    
+    // 创建挤压几何体
+    const extrudeGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+    
+    // 创建3D文字
+    const textMesh = new THREE.Mesh(extrudeGeometry, textMaterial)
+    
+    // 创建正面的平面，用于显示中文文本
+    const frontMesh = new THREE.Mesh(planeGeometry, textMaterial)
+    frontMesh.position.z = 0.1
     
     // 创建3D文字组
     const textGroup = new THREE.Group()
-    
-    // 创建正面
-    const frontGeometry = new THREE.PlaneGeometry(3, 0.8)
-    const frontMesh = new THREE.Mesh(frontGeometry, textMaterial)
-    frontMesh.position.z = 0.1
+    textGroup.add(textMesh)
     textGroup.add(frontMesh)
-    
-    // 创建背面
-    const backGeometry = new THREE.PlaneGeometry(3, 0.8)
-    const backMesh = new THREE.Mesh(backGeometry, textMaterial)
-    backMesh.position.z = -0.1
-    backMesh.rotation.y = Math.PI
-    textGroup.add(backMesh)
-    
-    // 创建顶部
-    const topGeometry = new THREE.BoxGeometry(3, 0.2, 0.01)
-    const topMesh = new THREE.Mesh(topGeometry, sideMaterial)
-    topMesh.position.y = 0.4
-    topMesh.position.z = 0
-    textGroup.add(topMesh)
-    
-    // 创建底部
-    const bottomGeometry = new THREE.BoxGeometry(3, 0.2, 0.01)
-    const bottomMesh = new THREE.Mesh(bottomGeometry, sideMaterial)
-    bottomMesh.position.y = -0.4
-    bottomMesh.position.z = 0
-    textGroup.add(bottomMesh)
-    
-    // 创建左侧
-    const leftGeometry = new THREE.BoxGeometry(0.01, 0.8, 0.2)
-    const leftMesh = new THREE.Mesh(leftGeometry, sideMaterial)
-    leftMesh.position.x = -1.5
-    leftMesh.position.z = 0
-    textGroup.add(leftMesh)
-    
-    // 创建右侧
-    const rightGeometry = new THREE.BoxGeometry(0.01, 0.8, 0.2)
-    const rightMesh = new THREE.Mesh(rightGeometry, sideMaterial)
-    rightMesh.position.x = 1.5
-    rightMesh.position.z = 0
-    textGroup.add(rightMesh)
     
     // 设置位置
     textGroup.position.z = -5
