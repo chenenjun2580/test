@@ -89,7 +89,7 @@ function createMeteorites() {
   // 使用锥体几何体创建光束效果
   const meteoriteGeometry = new THREE.ConeGeometry(0.01, 1, 8)
   
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 100; i++) { // 增加流星数量，实现全屏效果
     // 使用MeshLambertMaterial实现更好的光照效果
     const meteoriteMaterial = new THREE.MeshLambertMaterial({ 
       color: 0xffffff,
@@ -99,22 +99,24 @@ function createMeteorites() {
     
     const meteorite = new THREE.Mesh(meteoriteGeometry, meteoriteMaterial)
     
-    // 随机位置
-    meteorite.position.x = (Math.random() - 0.5) * 20
-    meteorite.position.y = (Math.random() - 0.5) * 20
-    meteorite.position.z = (Math.random() - 0.5) * 10
+    // 从右侧开始，全屏分布
+    meteorite.position.x = 15 // 从右侧开始
+    meteorite.position.y = (Math.random() - 0.5) * 20 // 全屏高度
+    meteorite.position.z = (Math.random() - 0.5) * 10 // 前后分布
     
-    // 随机旋转，使流星朝向下方
-    meteorite.rotation.x = Math.PI // 锥体尖端朝下
-    meteorite.rotation.y = Math.random() * Math.PI
+    // 旋转，使流星朝向左侧
+    meteorite.rotation.x = Math.PI / 2 // 水平方向
+    meteorite.rotation.y = Math.PI // 朝向左侧
     
     // 随机缩放
-    meteorite.scale.setScalar(Math.random() * 0.5 + 0.5)
+    meteorite.scale.setScalar(Math.random() * 0.8 + 0.5)
     
     // 添加速度和透明度属性
-    ;(meteorite as any).speed = Math.random() * 0.3 + 0.2
+    ;(meteorite as any).speed = Math.random() * 0.5 + 0.3 // 更快的速度
     ;(meteorite as any).opacity = 1
     ;(meteorite as any).fading = false
+    ;(meteorite as any).active = false // 初始状态为非活动
+    ;(meteorite as any).delay = Math.random() * 5 // 随机延迟激活
     
     scene.add(meteorite)
     meteorites.push(meteorite)
@@ -186,23 +188,6 @@ function createNewYearText() {
     const texture = new THREE.CanvasTexture(canvas)
     texture.needsUpdate = true
     
-    // 使用ExtrudeGeometry创建3D效果
-    const shape = new THREE.Shape()
-    const textGeometry = new THREE.PlaneGeometry(3, 0.8)
-    
-    // 创建挤压配置
-    const extrudeSettings = {
-      depth: 0.2,
-      bevelEnabled: true,
-      bevelThickness: 0.03,
-      bevelSize: 0.02,
-      bevelSegments: 5
-    }
-    
-    // 创建3D几何体
-    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
-    const planeGeometry = new THREE.PlaneGeometry(3, 0.8)
-    
     // 创建材质
     const textMaterial = new THREE.MeshPhongMaterial({ 
       map: texture,
@@ -210,11 +195,62 @@ function createNewYearText() {
       specular: 0xffffff
     })
     
-    // 使用平面几何体作为基础，因为ExtrudeGeometry需要Shape
-    newYearText = new THREE.Mesh(planeGeometry, textMaterial)
-    newYearText.position.z = -5
-    scene.add(newYearText)
-    newYearText.visible = false
+    const sideMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0xff0000,
+      shininess: 100,
+      specular: 0xffffff
+    })
+    
+    // 创建3D文字组
+    const textGroup = new THREE.Group()
+    
+    // 创建正面
+    const frontGeometry = new THREE.PlaneGeometry(3, 0.8)
+    const frontMesh = new THREE.Mesh(frontGeometry, textMaterial)
+    frontMesh.position.z = 0.1
+    textGroup.add(frontMesh)
+    
+    // 创建背面
+    const backGeometry = new THREE.PlaneGeometry(3, 0.8)
+    const backMesh = new THREE.Mesh(backGeometry, textMaterial)
+    backMesh.position.z = -0.1
+    backMesh.rotation.y = Math.PI
+    textGroup.add(backMesh)
+    
+    // 创建顶部
+    const topGeometry = new THREE.BoxGeometry(3, 0.2, 0.01)
+    const topMesh = new THREE.Mesh(topGeometry, sideMaterial)
+    topMesh.position.y = 0.4
+    topMesh.position.z = 0
+    textGroup.add(topMesh)
+    
+    // 创建底部
+    const bottomGeometry = new THREE.BoxGeometry(3, 0.2, 0.01)
+    const bottomMesh = new THREE.Mesh(bottomGeometry, sideMaterial)
+    bottomMesh.position.y = -0.4
+    bottomMesh.position.z = 0
+    textGroup.add(bottomMesh)
+    
+    // 创建左侧
+    const leftGeometry = new THREE.BoxGeometry(0.01, 0.8, 0.2)
+    const leftMesh = new THREE.Mesh(leftGeometry, sideMaterial)
+    leftMesh.position.x = -1.5
+    leftMesh.position.z = 0
+    textGroup.add(leftMesh)
+    
+    // 创建右侧
+    const rightGeometry = new THREE.BoxGeometry(0.01, 0.8, 0.2)
+    const rightMesh = new THREE.Mesh(rightGeometry, sideMaterial)
+    rightMesh.position.x = 1.5
+    rightMesh.position.z = 0
+    textGroup.add(rightMesh)
+    
+    // 设置位置
+    textGroup.position.z = -5
+    scene.add(textGroup)
+    textGroup.visible = false
+    
+    newYearText = textGroup
   }
 
   // 添加灯光
@@ -340,11 +376,20 @@ function updateMeteorites() {
   meteorites.forEach((meteorite) => {
     const m = meteorite as any
     
-    // 流星下落
-    meteorite.position.y -= m.speed
+    // 处理延迟激活
+    if (!m.active) {
+      m.delay -= 0.01
+      if (m.delay <= 0) {
+        m.active = true
+      }
+      return
+    }
+    
+    // 流星从右往左移动
+    meteorite.position.x -= m.speed
     
     // 流星旋转
-    meteorite.rotation.y += 0.01
+    meteorite.rotation.z += 0.01
     
     // 实现闪烁效果
     if (!m.fading) {
@@ -366,7 +411,7 @@ function updateMeteorites() {
     }
     
     // 流星超出边界后重置
-    if (meteorite.position.y < -10) {
+    if (meteorite.position.x < -15) {
       resetMeteorite(meteorite)
     }
   })
@@ -376,24 +421,27 @@ function updateMeteorites() {
 function resetMeteorite(meteorite: THREE.Mesh) {
   const m = meteorite as any
   
-  // 重置位置
-  meteorite.position.x = (Math.random() - 0.5) * 20
-  meteorite.position.y = 10
-  meteorite.position.z = (Math.random() - 0.5) * 10
+  // 重置位置（从右侧重新开始）
+  meteorite.position.x = 15
+  meteorite.position.y = (Math.random() - 0.5) * 20 // 全屏高度
+  meteorite.position.z = (Math.random() - 0.5) * 10 // 前后分布
   
   // 重置旋转
-  meteorite.rotation.x = Math.PI
-  meteorite.rotation.y = Math.random() * Math.PI
+  meteorite.rotation.x = Math.PI / 2 // 水平方向
+  meteorite.rotation.y = Math.PI // 朝向左侧
+  meteorite.rotation.z = 0
   
   // 重置透明度和状态
   m.opacity = 1
   m.fading = false
+  m.active = false // 重置为非活动状态，实现间断出现
+  m.delay = Math.random() * 3 // 随机延迟，实现间断效果
   if (meteorite.material instanceof THREE.Material) {
     meteorite.material.opacity = 1
   }
   
   // 重置速度
-  m.speed = Math.random() * 0.3 + 0.2
+  m.speed = Math.random() * 0.5 + 0.3
 }
 
 // 挂载时初始化
