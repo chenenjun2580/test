@@ -38,6 +38,8 @@ function initScene() {
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.05
+  controls.target.set(0, 0, 0) // 设置控制器目标为原点
+  controls.update()
 
   // 创建流星雨
   createMeteorites()
@@ -198,40 +200,46 @@ function createNewYearText() {
     // 创建一个平面几何体作为基础
     const planeGeometry = new THREE.PlaneGeometry(3, 0.8)
     
-    // 创建挤压配置，创建真正的3D效果
-    const extrudeSettings = {
-      depth: 0.2,
-      bevelEnabled: true,
-      bevelThickness: 0.03,
-      bevelSize: 0.02,
-      bevelSegments: 5
-    }
-    
-    // 创建一个简单的形状作为挤压基础
-    const shape = new THREE.Shape()
-    shape.moveTo(-1.5, -0.4)
-    shape.lineTo(1.5, -0.4)
-    shape.lineTo(1.5, 0.4)
-    shape.lineTo(-1.5, 0.4)
-    shape.closePath()
-    
-    // 创建挤压几何体
-    const extrudeGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
-    
-    // 创建3D文字
-    const textMesh = new THREE.Mesh(extrudeGeometry, textMaterial)
+    // 创建3D文字组
+    const textGroup = new THREE.Group()
     
     // 创建正面的平面，用于显示中文文本
     const frontMesh = new THREE.Mesh(planeGeometry, textMaterial)
     frontMesh.position.z = 0.1
-    
-    // 创建3D文字组
-    const textGroup = new THREE.Group()
-    textGroup.add(textMesh)
     textGroup.add(frontMesh)
     
+    // 创建背面的平面
+    const backMesh = new THREE.Mesh(planeGeometry, textMaterial)
+    backMesh.position.z = -0.1
+    backMesh.rotation.y = Math.PI
+    textGroup.add(backMesh)
+    
+    // 创建左侧面
+    const leftGeometry = new THREE.BoxGeometry(0.01, 0.8, 0.2)
+    const leftMesh = new THREE.Mesh(leftGeometry, new THREE.MeshPhongMaterial({ color: 0xff0000 }))
+    leftMesh.position.x = -1.5
+    textGroup.add(leftMesh)
+    
+    // 创建右侧面
+    const rightGeometry = new THREE.BoxGeometry(0.01, 0.8, 0.2)
+    const rightMesh = new THREE.Mesh(rightGeometry, new THREE.MeshPhongMaterial({ color: 0xff0000 }))
+    rightMesh.position.x = 1.5
+    textGroup.add(rightMesh)
+    
+    // 创建顶面
+    const topGeometry = new THREE.BoxGeometry(3, 0.01, 0.2)
+    const topMesh = new THREE.Mesh(topGeometry, new THREE.MeshPhongMaterial({ color: 0xff0000 }))
+    topMesh.position.y = 0.4
+    textGroup.add(topMesh)
+    
+    // 创建底面
+    const bottomGeometry = new THREE.BoxGeometry(3, 0.01, 0.2)
+    const bottomMesh = new THREE.Mesh(bottomGeometry, new THREE.MeshPhongMaterial({ color: 0xff0000 }))
+    bottomMesh.position.y = -0.4
+    textGroup.add(bottomMesh)
+    
     // 设置位置
-    textGroup.position.z = -5
+    textGroup.position.set(0, 0, -5)
     scene.add(textGroup)
     textGroup.visible = false
     
