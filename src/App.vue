@@ -174,8 +174,8 @@ function createNewYearText() {
   
   // 绘制爱心轮廓
   heartShape.moveTo(x, y + 1)
-  heartShape.bezierCurveTo(x + 1.5, y + 1.5, x + 1.5, y - 1, x, y - 0.5)
-  heartShape.bezierCurveTo(x - 1.5, y - 1, x - 1.5, y + 1.5, x, y + 1)
+  heartShape.bezierCurveTo(x + 1.5, y + 1.5, x + 1.5, y - 0.5, x, y - 1)
+  heartShape.bezierCurveTo(x - 1.5, y - 0.5, x - 1.5, y + 1.5, x, y + 1)
   
   // 挤压设置，添加倒角效果
   const extrudeSettings = {
@@ -217,7 +217,7 @@ function createNewYearText() {
     context.textBaseline = 'middle'
     
     // 绘制中文文本
-    const text = '我爱你'
+    const text = '万元yi我爱你'
     context.fillText(text, canvas.width / 2, canvas.height / 2)
     
     // 创建纹理
@@ -243,7 +243,7 @@ function createNewYearText() {
     textGroup.add(textMesh)
     
     // 设置位置，文字在爱心下方
-    textMesh.position.set(0, -3, 0)
+    textMesh.position.set(0, -2, 0)
     
     // 设置整体位置
     textGroup.position.set(0, 0, -5)
