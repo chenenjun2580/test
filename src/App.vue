@@ -217,7 +217,7 @@ function createNewYearText() {
     context.textBaseline = 'middle'
     
     // 绘制中文文本
-    const text = '万元yi我爱你'
+    const text = '万元意我爱你'
     context.fillText(text, canvas.width / 2, canvas.height / 2)
     
     // 创建纹理
