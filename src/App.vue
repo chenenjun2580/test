@@ -173,9 +173,9 @@ function createNewYearText() {
   const y = 0
   
   // 绘制爱心轮廓
-  heartShape.moveTo(x, y + 2)
-  heartShape.bezierCurveTo(x + 2, y + 2, x + 2, y, x, y - 1)
-  heartShape.bezierCurveTo(x - 2, y, x - 2, y + 2, x, y + 2)
+  heartShape.moveTo(x, y + 1)
+  heartShape.bezierCurveTo(x + 1.5, y + 1.5, x + 1.5, y - 1, x, y - 0.5)
+  heartShape.bezierCurveTo(x - 1.5, y - 1, x - 1.5, y + 1.5, x, y + 1)
   
   // 挤压设置，添加倒角效果
   const extrudeSettings = {
