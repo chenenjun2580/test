@@ -165,9 +165,44 @@ function createAurora() {
   aurora.visible = false
 }
 
-// 创建3D新年快乐文字
+// 创建3D爱心和"我爱你"文字
 function createNewYearText() {
-  // 使用CanvasTexture创建包含中文字符的纹理
+  // 创建3D爱心形状
+  const heartShape = new THREE.Shape()
+  const x = 0
+  const y = 0
+  
+  // 绘制爱心轮廓
+  heartShape.moveTo(x, y + 2)
+  heartShape.bezierCurveTo(x + 2, y + 2, x + 2, y, x, y - 1)
+  heartShape.bezierCurveTo(x - 2, y, x - 2, y + 2, x, y + 2)
+  
+  // 挤压设置，添加倒角效果
+  const extrudeSettings = {
+    depth: 0.5,
+    bevelEnabled: true,
+    bevelThickness: 0.1,
+    bevelSize: 0.1,
+    bevelSegments: 5
+  }
+  
+  // 创建挤压几何体
+  const heartGeometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings)
+  
+  // 创建红色材质，带有光泽和高光效果
+  const heartMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xff0000,
+    shininess: 100,
+    specular: 0xffffff
+  })
+  
+  // 创建爱心网格
+  const heartMesh = new THREE.Mesh(heartGeometry, heartMaterial)
+  
+  // 适当放大爱心尺寸
+  heartMesh.scale.set(1.5, 1.5, 1.5)
+  
+  // 创建"我爱你"文字
   const canvas = document.createElement('canvas')
   canvas.width = 1024
   canvas.height = 256
@@ -175,7 +210,6 @@ function createNewYearText() {
   
   if (context) {
     // 设置字体和样式
-    // 先填充透明背景，只显示文字
     context.clearRect(0, 0, canvas.width, canvas.height)
     context.fillStyle = '#ff0000'
     context.font = 'bold 80px "Microsoft YaHei", "SimHei", sans-serif'
@@ -183,7 +217,7 @@ function createNewYearText() {
     context.textBaseline = 'middle'
     
     // 绘制中文文本
-    const text = '新年快乐 2026'
+    const text = '我爱你'
     context.fillText(text, canvas.width / 2, canvas.height / 2)
     
     // 创建纹理
@@ -199,34 +233,19 @@ function createNewYearText() {
       specular: 0xffffff
     })
     
-    // 创建一个平面几何体作为文字基础
-    const planeGeometry = new THREE.PlaneGeometry(3, 0.8)
+    // 创建文字平面
+    const textGeometry = new THREE.PlaneGeometry(3, 0.8)
+    const textMesh = new THREE.Mesh(textGeometry, textMaterial)
     
     // 创建3D文字组
     const textGroup = new THREE.Group()
+    textGroup.add(heartMesh)
+    textGroup.add(textMesh)
     
-    // 创建正面的平面，用于显示中文文本
-    const frontMesh = new THREE.Mesh(planeGeometry, textMaterial)
-    textGroup.add(frontMesh)
+    // 设置位置，文字在爱心下方
+    textMesh.position.set(0, -3, 0)
     
-    // 创建3D效果，使用薄的挤压几何体
-    const extrudeSettings = {
-      depth: 0.05,
-      bevelEnabled: false
-    }
-    
-    const shape = new THREE.Shape()
-    shape.moveTo(-1.5, -0.4)
-    shape.lineTo(1.5, -0.4)
-    shape.lineTo(1.5, 0.4)
-    shape.lineTo(-1.5, 0.4)
-    shape.closePath()
-    
-    const extrudeGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
-    const extrudeMesh = new THREE.Mesh(extrudeGeometry, textMaterial)
-    textGroup.add(extrudeMesh)
-    
-    // 设置位置
+    // 设置整体位置
     textGroup.position.set(0, 0, -5)
     scene.add(textGroup)
     textGroup.visible = false
